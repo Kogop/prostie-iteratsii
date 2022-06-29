@@ -14,6 +14,8 @@ double masA[n][n] = { { 0.05, -0.06, -0.12, 0.14 },
 double masB[n] = { -2.17, 1.4, -2.1, -0.8 };
 
 
+
+
 int main() {
     MPI_Init(NULL, NULL);
     double starttime, endtime;
@@ -43,54 +45,50 @@ int main() {
         MPI_Bcast(masA, n * n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         MPI_Scatter(masB, n, MPI_DOUBLE, rbufA, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
-    
-    do
+ 
+    for (size_t i = 0; i < 10000; i++)
     {
 
-       
-            x[rank] = 0.0;
-            for (int j = 0; j < n; j++) {
-                x[rank] += masA[rank][j] * x0[j];
-            }
-          
-         
-            x[rank] += masB[rank];
-            E[rank] = fabs(x[rank] - x0[rank]);
-            max[rank] = 0.0;
-  
-     
-            if (max[rank] < E[rank]) {
-                max[rank] = E[rank];
-            }
-            x0[rank] = x[rank];
-           
-        counter++;
 
+        x[rank] = 0.0;
+        for (int j = 0; j < n; j++) {
+            x[rank] += masA[rank][j] * x0[j];
+        }
+
+
+        x[rank] += masB[rank];
+        E[rank] = fabs(x[rank] - x0[rank]);
+        max[rank] = 0.0;
+
+
+        if (max[rank] < E[rank]) {
+            max[rank] = E[rank];
+        }
+        x0[rank] = x[rank];
+
+        counter++;
         MPI_Gather(&max[0], 4, MPI_DOUBLE, rbufB, 4, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         if (rank == 0)
         {
             for (int i = 0; i < 4; i++) {
                 if (max[i] > eps)
                 {
-                   
+
                 }
                 else
                 {
                     counter1++;
-                  
+
                 }
 
             }
             if (counter1 == 4)
             {
-                enough = false;
-                MPI_Bcast(&enough, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+                break;
             }
 
         }
-
-    } while (enough);
-
+    }
 
     MPI_Gather(&x[0], 4, MPI_DOUBLE, rbuf, 4, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     if (rank == 0)
